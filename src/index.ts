@@ -1,12 +1,36 @@
-const express = require('express');
+import express, { Application } from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import './utils/env';
 
-const app = express();
-const port = 5000;
+import errorHandler from './middleware/errorHandler.middleware';
+import routers from './routes/index';
+import db from './db/index';
 
-app.get('/', (req: any, res: any) => {
-  res.send('good job man');
-});
+const PORT = process.env.PORT || 5000;
+const app: Application = express();
 
-app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
-});
+app.use(helmet());
+app.use(cors());
+app.use(cookieParser());
+app.use(express.json());
+
+app.use('/api', routers);
+
+app.use(errorHandler);
+
+const start = async () => {
+  try {
+    await db.authenticate();
+    await db.sync();
+
+    app.listen(PORT, (): void => {
+      console.log(`Example app listening at http://localhost:${PORT}`);
+    });
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+start();
